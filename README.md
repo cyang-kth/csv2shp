@@ -1,6 +1,6 @@
-### csv2shp
+## csv2shp
 
-This is a utility tool for converting a CSV file into ESRI shapefile. 
+This is a utility tool for converting a CSV file into an ESRI shapefile. 
 
 The CSV file should contain a **header** with geometry stored in format of XY coordinates or WKT text.
 
@@ -10,7 +10,7 @@ The CSV file should contain a **header** with geometry stored in format of XY co
 
 #### Usage
 
-    csv2shp -i INPUT_FILE  -m xy|wkt -x X_COLUMN_NAME, -y Y_COLUMN_NAME|-geom GEOM_COLUMN [-delimiter ';'] -o output_file
+    csv2shp -i INPUT_FILE  -m xy|wkt [-x X_COLUMN_NAME, -y Y_COLUMN_NAME|-geom GEOM_COLUMN] [-delimiter ';'] -o output_file
 
 - i (required): input file
 - o (required): output file
