@@ -1,24 +1,49 @@
 ### csv2shp
 
-This is a tool for converting from CSV file to ESRI shapefile.
+This is a utility tool for converting a CSV file into ESRI shapefile. 
+
+The CSV file should contain a **header** with geometry stored in format of XY coordinates or WKT text.
+
+#### Installation
+
+    make install
 
 #### Usage
 
-    csv2shp -i INPUT_FILE -x X_COLUMN_NAME, -y Y_COLUMN_NAME|-geom GEOM_COLUMN [-delimiter ';'] [-t 012... ] -o output_file
+    csv2shp -i INPUT_FILE  -m xy|wkt -x X_COLUMN_NAME, -y Y_COLUMN_NAME|-geom GEOM_COLUMN [-delimiter ';'] -o output_file
 
-- t: column types as 0(int),1(double),2(string)
+- i (required): input file
+- o (required): output file
+- m (required): mode (xy input or wkt input)
+- g (optional): geometry column idx (Default:'geom') used when mode is wkt 
+- x (optional): x column idx (Default:'x') used when mode is xy 
+- y (optional): y column idx (Default:'y') used when mode is xy 
+- d (optional): delimiter of CSV file (Default: ';')
+- h: help information
 
-If `t` is not specified, the data types of columns will be infered as int,double,string automatically. 
+The data type of columns will be infered as int,double,string automatically. 
 
-#### Functions to be added
+    cd example
+    csv2shp -i xy.csv -o example.shp -m 'xy' -d ','
+    csv2shp -i wkt.csv -o example.shp -m 'wkt' -d ';'
 
-Manually specify the data types as -t 012012 for the columns
+Check the result using `ogrinfo`:
+
+    ogrinfo -so -al example.shp
 
 #### Requirement
 
-- Unix OS
-- GDAL
+- Unix OS (tested on Ubuntu 16.04)
+- gcc >= 4.4 (gnu++11 used)
+- GDAL >= 2.1.0
 
+#### Author information 
+
+Can Yang, Ph.D. student at KTH, Royal Institute of Technology in Sweden 
+
+Email: cyang(at)kth.se
+
+Homepage: https://people.kth.se/~cyang/
 
 
 

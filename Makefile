@@ -1,8 +1,6 @@
 build:
-	g++ -std=gnu++11 csv2shp.cpp -o csv2shp -lgdal
-test:
-	g++ -std=gnu++11 checkstring.cpp -o checkstring.out
+	g++ -std=gnu++11 -O3 csv2shp.cpp -o csv2shp -lgdal
 install:build
 	cp csv2shp ~/bin
 clean:
-	rm *.out
+	rm csv2shp
