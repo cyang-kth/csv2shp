@@ -28,28 +28,30 @@ inline bool isInteger(const std::string & s)
  */
 int getStringType(const std::string & s){
     if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return 2;
-    char* p;
-    long converted = strtol(s, &p, 10);
-    if (*p) {
-        // conversion failed because the input wasn't a number
-        return 2;
-    }
-    else {
-        // if it is a double
-
-        // if it is an int
+    char* iendptr,dendptr;
+    long ivalue = strtol(s.c_str(), &iendptr, 10);
+    double dval = strtod(s.c_str(), &dendptr);
+    /* Check for various possible errors */
+    if (*endptr != '\0' && *dendptr != '\0'){
+      // Input string 
+      return 2;
+    } else if (*endptr != '\0' && *dendptr == '\0'){
+        // Input is double
+      return 1;
+    } else {
+        // Input is integer
+      return 0;
     }
 };
 class CSVReader{
 public:
-    CSVReader(const std::string & filename, const std::string & x_column,const std::string & y_column)
+    CSVReader(const std::string & filename, const std::string & x_column,const std::string & y_column):ifs(filename)
     {
         std::cout<<"Reading meta data from: " << filename << std::endl;
         // Infer geometry type
-        std::fstream ifs(filename);
-        headers = getNextLineAndSplitIntoTokens(ifs);
+        headers = getNextLineAndSplitIntoTokens();
         // Read a single line to infer the geometry type
-        std::vector<std::string> row = getNextLineAndSplitIntoTokens(ifs);
+        std::vector<std::string> row = getNextLineAndSplitIntoTokens();
         for (int i=0;i<N;++i){
             if(row[i]==x_column) x_idx = i;
             if(row[i]==y_column) y_idx = i;
@@ -59,18 +61,19 @@ public:
             std::cout<<"Y column idx" << y_idx << std::endl;
         } else {
             std::cout<<"Error, x,y column not found" << std::endl;
+            exit(EXIT_FAILURE);
         }
         geom_type_idx=0; // XY with Point data type
+        column_types = find_data_types(row);
         std::cout<<"Finish reading meta data" << std::endl;
     };
-    CSVReader(const std::string & filename, const std::string & geom_column)
+    CSVReader(const std::string & filename, const std::string & geom_column):ifs(filename)
     {
         std::cout<<"Reading meta data from: " << filename << std::endl;
         // Infer geometry type
-        std::fstream ifs(filename);
-        headers = getNextLineAndSplitIntoTokens(ifs);
+        headers = getNextLineAndSplitIntoTokens();
         // Read a single line to infer the geometry type
-        std::vector<std::string> row = getNextLineAndSplitIntoTokens(ifs);
+        std::vector<std::string> row = getNextLineAndSplitIntoTokens();
         for (int i=0;i<N;++i){
             if(row[i]==geom_column) geom_idx = i;
         }
@@ -78,6 +81,7 @@ public:
             std::cout<<"Geometry column index" << geom_idx << std::endl;
         } else {
             std::cout<<"Error, geometry column not found" << std::endl;
+            exit(EXIT_FAILURE);
         }
         std::string wkt = row[geom_idx];
         std::stringstream  wktStream(wkt);
@@ -85,20 +89,24 @@ public:
         // POINT, LINESTRING, POLYGON, MULTILINESTRING, MULTIPOLYGON
         std::string wktType;
         std::getline(wktStream,wktType,'(');
-        geom_type_idx = find_geom_type_idx(wktType);
+        for (int i=0;i<GEOM_TYPES.size();++i){
+            if(wktType==GEOM_TYPES[i]) geom_type_idx = i;
+        }
         if (geom_type_idx>-1){
             std::cout<<"Geometry type" << GEOM_TYPES[geom_type_idx] << std::endl;
         } else {
             std::cout<<"Error, unrecognized geometry type" << std::endl;
+            exit(EXIT_FAILURE);
         }
+        column_types = find_data_types(row);
         std::cout<<"Finish reading meta data" << std::endl;
     };
-    std::vector<std::string> getNextLineAndSplitIntoTokens(std::istream& str)
+    std::vector<std::string> getNextLineAndSplitIntoTokens()
     {
         std::vector<std::string>   result;
         std::string                line;
         // extracts characters until the given character is found
-        std::getline(str,line);
+        std::getline(ifs,line);
         std::stringstream          lineStream(line);
         std::string                cell;
         while(std::getline(lineStream,cell,delimiter)) // Get token from stringstream into string
@@ -107,29 +115,30 @@ public:
         }
         return result;
     };
+    int get_x_idx(){
+        return x_idx;
+    }
+    int get_y_idx(){
+        return y_idx;
+    }
+    int get_geom_idx(){
+        return geom_idx;
+    }
     int get_geom_type_idx(){
         return geom_type_idx;
     };
     std::vector<std::string> get_headers(){
         return headers;
     };
-private:
-    static int find_geom_type_idx(std::string &wkt){
-        for (int i=0;i<GEOM_TYPES.size();++i){
-            if(wktType==GEOM_TYPES[i]) geom_type_idx = i;
-        }
+    std::vector<int> get_column_types(){
+        return column_types;
     };
-    static std::vector<int> infer_data_types(CSVRow &row){
+private:
+    static std::vector<int> find_data_types(CSVRow &row){
         // String 0, int 1, double 2
         std::vector<int> result;
         for (int i=0;i<row.size();++i){
-            if (std::stod(row[i])){
-                result.push_back(2);
-            } else if (std::stoi(row[i])){
-                result.push_back(1);
-            } else {
-                result.push_back(0);
-            };
+            result.push_back(getStringType(row[i]));
         };
         return result;
     };
@@ -137,6 +146,8 @@ private:
      *  Infer geometry type of the CSV file
      */
     std::vector<std::string> headers; // headers of CSV file
+    std::vector<int> column_types; // headers of CSV file
+    std::fstream ifs;
     char delimiter=';'; // delimiter
     int x_idx=-1; // x column idx
     int y_idx=-1; // y column idx
@@ -158,8 +169,9 @@ public:
     void feature_set_string_field(OGRFeature *feature, int idx, std::string &content){
         feature->SetField(idx,content.c_str());
     };
-    SetFieldFunc[] funcArray=[feature_set_int_field,feature_set_double_field,feature_set_string_field];
-    SHPWriter(const std::string &filename,std::vector<std::string> &headers,int geom_idx){
+
+    SetFieldFunc funcArray[]={feature_set_int_field,feature_set_double_field,feature_set_string_field};
+    SHPWriter(const std::string &filename,std::vector<std::string> &headers,std::vector<int> &column_types){
         const char *pszDriverName = "ESRI Shapefile";
         GDALDriver *poDriver;
         GDALAllRegister();
@@ -182,21 +194,42 @@ public:
             exit( 1 );
         }
         for (int i=0;i<headers.size();++i){
-            OGRFieldDefn oField(headers[i],OFTString);
-            oField.SetWidth(32);
-            if( poLayer->CreateField( &oField ) != OGRERR_NONE )
-            {
-                printf("Creating field %s failed.\n", headers[i]);
-                exit( 1 );
+            // Define fields
+            if(column_types[i]==0){
+                // int
+                OGRFieldDefn oField(headers[i],OFTString);
+                oField.SetWidth(32);
+                if( poLayer->CreateField( &oField ) != OGRERR_NONE )
+                {
+                    printf("Creating field %s failed.\n", headers[i]);
+                    exit( 1 );
+                }
+            } else if (column_types[i]==1){
+                // Double
+                OGRFieldDefn oField(headers[i],OFTString);
+                oField.SetWidth(32);
+                if( poLayer->CreateField( &oField ) != OGRERR_NONE )
+                {
+                    printf("Creating field %s failed.\n", headers[i]);
+                    exit( 1 );
+                }
+            } else { // string 
+                OGRFieldDefn oField(headers[i],OFTString);
+                oField.SetWidth(32);
+                if( poLayer->CreateField( &oField ) != OGRERR_NONE )
+                {
+                    printf("Creating field %s failed.\n", headers[i]);
+                    exit( 1 );
+                }
             }
         }
     };
-    void write_data_xy(CSVRow &row,std::vector<int> &fieldtypes){
+    void write_data_xy(CSVRow &row,std::vector<int> &column_types,int x_idx,int y_idx){
         OGRFeature *poFeature;
         poFeature = OGRFeature::CreateFeature(poLayer->GetLayerDefn());
         double x, y;
         for (int i=0;i<row.size();++i){
-            poFeature->SetField(i,row[i]);
+            funcArray[column_types[i]](poFeature,i,row[i]);
             if (i==x_idx) x = row[i];
             if (i==y_idx) y = row[i];
         }
@@ -211,11 +244,11 @@ public:
         }
         OGRFeature::DestroyFeature( poFeature );
     };
-    void write_data_wkt(CSVRow &row,std::vector<int> &fieldtypes){
+    void write_data_wkt(CSVRow &row,std::vector<int> &column_types,int geom_idx){
         OGRFeature *poFeature;
         poFeature = OGRFeature::CreateFeature(poLayer->GetLayerDefn());
         for (int i=0;i<row.size();++i){
-            if (i!=geom_idx) poFeature->SetField(i,row[i]);
+            if (i!=geom_idx) funcArray[column_types[i]](poFeature,i,row[i]);
         }
         OGRGeometry *poGeometry;
         char* pszWKT = row[geom_idx].c_str();
@@ -277,6 +310,8 @@ int main (int argc, char **argv)
     std::string y_column="y";
     std::string geom_column="geom";
     char delimiter=';';
+    bool xy=false;
+    bool wkt=false;
     // 0 or all patterns, 1 for closed pattern, 2 maximal pattern
     int opt;
     // The last element of the array has to be filled with zeros.
@@ -308,12 +343,14 @@ int main (int argc, char **argv)
                 break;
             case 'x' :
                 x_column = std::string(optarg);
+                xy=true;
                 break;
             case 'y' :
                 y_column = std::string(optarg);
                 break;
             case 'g' :
                 geom_column = std::string(optarg);
+                wkt=true;
                 break;
             case 'h' :
                 print_help();
@@ -331,7 +368,11 @@ int main (int argc, char **argv)
         print_help();
         exit(EXIT_FAILURE);
     }
-    CSVReader reader(input_file);
-    SHPWriter writer(output_file)
-
+    if (xy){
+        CSVReader reader(input_file,x_column,y_column);        
+        SHPWriter writer(output_file);
+    } else {
+        CSVReader reader(input_file,geom_column);
+        SHPWriter writer(output_file);
+    };
 }
