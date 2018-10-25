@@ -15,9 +15,9 @@ The CSV file should contain geometry stored in format of XY coordinates or WKT t
 - i (required): input file
 - o (required): output file
 - m (required): mode (xy input or wkt input)
-- g (optional): geometry column or idx (Default:'geom') used when mode is wkt 
-- x (optional): x column or idx (Default:'x') used when mode is xy 
-- y (optional): y column or idx (Default:'y') used when mode is xy 
+- g (optional): geometry column name or idx starting from 0 (Default:'geom') used when mode is wkt 
+- x (optional): x column name or idx starting from 0 (Default:'x') used when mode is xy 
+- y (optional): y column name or idx starting from 0 (Default:'y') used when mode is xy 
 - d (optional): delimiter of CSV file (Default: ';')
 - H (optional): with header, t or f (Default: 't')
 - h: help information

@@ -414,9 +414,9 @@ void print_help()
     std::cout << "-i (required): input file" << std::endl;
     std::cout << "-o (required): output file" << std::endl;
     std::cout << "-m (required): mode (xy or wkt)" << std::endl;
-    std::cout << "-g (optional): geometry column idx (Default:'geom')" << std::endl;
-    std::cout << "-x (optional): x column idx (Default:'x')" << std::endl;
-    std::cout << "-y (optional): y column idx (Default:'y')" << std::endl;
+    std::cout << "-g (optional): geometry column name or idx starting from 0 (Default:'geom')" << std::endl;
+    std::cout << "-x (optional): x column name or idx starting from 0 (Default:'x')" << std::endl;
+    std::cout << "-y (optional): y column name or idx starting from 0 (Default:'y')" << std::endl;
     std::cout << "-d (optional): delimiter of CSV file (Default: ';')" << std::endl;
     std::cout << "-H (optional): with header (t or f) (Default: 't')" << std::endl;
     std::cout << "-h: help information" << std::endl;
